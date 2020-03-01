@@ -154,6 +154,7 @@
 
 #[macro_use]
 mod common;
+pub mod activity;
 mod auth;
 pub mod cursor;
 pub mod direct;
