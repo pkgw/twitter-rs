@@ -520,6 +520,45 @@ pub fn post_json(uri: &str, token: &Token, body: &serde_json::Value) -> Request<
     request.body(body).unwrap()
 }
 
+/// Assemble a signed DELETE request to the given URL with the given parameters.
+pub(crate) fn delete(uri: &str, token: &Token, params: Option<&ParamList>) -> Request<Body> {
+    let content = "application/x-www-form-urlencoded";
+    let body = if let Some(p) = params {
+        Body::from(
+            p.iter()
+                .map(|(k, v)| format!("{}={}", k, percent_encode(v)))
+                .collect::<Vec<_>>()
+                .join("&"),
+        )
+    } else {
+        Body::empty()
+    };
+
+    let request = Request::delete(uri).header(CONTENT_TYPE, content);
+
+    let request = match *token {
+        Token::Access {
+            consumer: ref con_token,
+            access: ref access_token,
+        } => {
+            let header = get_header(
+                Method::DELETE,
+                uri,
+                con_token,
+                Some(access_token),
+                None,
+                None,
+                params,
+            );
+
+            request.header(AUTHORIZATION, header.to_string())
+        }
+        Token::Bearer(ref token) => request.header(AUTHORIZATION, bearer(token)),
+    };
+
+    request.body(body).unwrap()
+}
+
 /// With the given consumer KeyPair, ask Twitter for a request KeyPair that can be used to request
 /// access to the user's account.
 ///

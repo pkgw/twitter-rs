@@ -7,7 +7,11 @@
 use serde::Deserialize;
 
 use crate::common::*;
-use crate::{auth, links};
+use crate::{
+    auth,
+    error::{self, Error::InvalidResponse},
+    links,
+};
 
 //mod fun;
 //mod raw;
@@ -54,4 +58,28 @@ impl WebhookSpec {
         let req = auth::post(&url, token, Some(&params));
         make_parsed_future(req)
     }
+}
+
+///Delete a webhook.
+///
+///This could/should be a method on `Webhook`, but I don't have enough API
+///coverage to make it easy to get `Webhook` instances on which to operate.
+pub fn delete_webhook(env_name: &str, webhook_id: &str, token: &auth::Token) -> FutureResponse<()> {
+    let url = format!(
+        "{}/all/{}/webhooks/{}.json",
+        links::activity::ACTIVITY_STEM,
+        env_name,
+        webhook_id,
+    );
+    let req = auth::delete(&url, token, None);
+
+    fn parse_resp(full_resp: String, headers: &Headers) -> Result<Response<()>, error::Error> {
+        if full_resp.is_empty() {
+            rate_headers(headers)
+        } else {
+            Err(InvalidResponse("Expected empty response", Some(full_resp)))
+        }
+    }
+
+    make_future(req, parse_resp)
 }
