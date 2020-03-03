@@ -23,9 +23,10 @@ use crate::{
 pub struct Webhook {
     ///ID of this webhook.
     pub id: String,
-    ///UTC timestamp from when this webhook was created.
-    #[serde(deserialize_with = "deserialize_datetime")]
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    ///Timestamp of when this webhook was created -- note that it is
+    ///not provided in the standard format. We don't bother parsing it
+    ///at the moment. An example value is "2020-03-03 00:47:32 +0000".
+    pub created_timestamp: String,
     ///The URL of the webhook.
     pub url: String,
     ///Whether the webhook validated successfully.
