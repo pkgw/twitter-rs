@@ -84,3 +84,23 @@ pub fn delete_webhook(env_name: &str, webhook_id: &str, token: &auth::Token) -> 
 
     make_future(req, parse_resp)
 }
+
+///Subscribe the environment to events from the current user
+pub fn subscribe_current_user(env_name: &str, token: &auth::Token) -> FutureResponse<()> {
+    let url = format!(
+        "{}/all/{}/subscriptions.json",
+        links::activity::ACTIVITY_STEM,
+        env_name,
+    );
+    let req = auth::post(&url, token, None);
+
+    fn parse_resp(full_resp: String, headers: &Headers) -> Result<Response<()>, error::Error> {
+        if full_resp.is_empty() {
+            rate_headers(headers)
+        } else {
+            Err(InvalidResponse("Expected empty response", Some(full_resp)))
+        }
+    }
+
+    make_future(req, parse_resp)
+}
